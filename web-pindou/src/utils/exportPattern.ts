@@ -6,9 +6,9 @@ export function buildPatternSvg(
   pixelData: PixelData[],
   gridWidth: number,
   gridHeight: number,
-  options: { cellSize: number; showCodes: boolean; title?: string }
+  options: { cellSize: number; showCodes: boolean; title?: string; backgroundFill?: string | null }
 ): string {
-  const { cellSize, showCodes, title } = options
+  const { cellSize, showCodes, title, backgroundFill } = options
   const pad = 1
   const w = gridWidth * cellSize + pad * 2
   const h = gridHeight * cellSize + pad * 2 + (title ? 36 : 0)
@@ -18,7 +18,10 @@ export function buildPatternSvg(
   parts.push(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">`
   )
-  parts.push(`<rect x="0" y="0" width="${w}" height="${h}" fill="#020617"/>`)
+  if (backgroundFill !== null) {
+    const fill = backgroundFill ?? '#020617'
+    parts.push(`<rect x="0" y="0" width="${w}" height="${h}" fill="${fill}"/>`)
+  }
   if (title) {
     parts.push(
       `<text x="${w / 2}" y="22" fill="#e5e7eb" font-size="14" font-family="system-ui,sans-serif" text-anchor="middle">${escapeXml(
@@ -28,6 +31,7 @@ export function buildPatternSvg(
   }
 
   for (const p of pixelData) {
+    if (p.isRemoved) continue
     const x = pad + p.x * cellSize
     const y = pad + titleOffset + p.y * cellSize
     parts.push(

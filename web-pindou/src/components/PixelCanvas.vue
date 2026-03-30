@@ -105,8 +105,9 @@ function draw() {
   ctx.fillStyle = '#020617'
   ctx.fillRect(0, 0, w, h)
 
-  // 纯色平铺格子
+  // 纯色平铺格子（空洞不画色块，只显示底色）
   for (const pixel of store.pixelData) {
+    if (pixel.isRemoved) continue
     const x = pixel.x * (beadSize + beadGap) + beadGap
     const y = pixel.y * (beadSize + beadGap) + beadGap
     ctx.fillStyle = pixel.hex
@@ -139,6 +140,7 @@ function draw() {
     ctx.font = `600 ${fontPx}px ui-sans-serif, system-ui, sans-serif`
 
     for (const pixel of store.pixelData) {
+      if (pixel.isRemoved) continue
       const cx = pixel.x * (beadSize + beadGap) + beadGap + beadSize / 2
       const cy = pixel.y * (beadSize + beadGap) + beadGap + beadSize / 2
       const label = pixel.colorCode

@@ -262,6 +262,36 @@ const isDarkMode = computed(() => store.isDarkMode)
   }
 }
 
+@media (max-width: 768px) {
+  .main-wrap {
+    padding: 12px;
+  }
+  
+  .hero {
+    padding: 20px;
+  }
+  
+  .hero-title {
+    font-size: 20px;
+  }
+  
+  .hero-lead {
+    font-size: 13px;
+  }
+  
+  .canvas-container {
+    height: 400px;
+  }
+  
+  .sidebar.left {
+    width: 100%;
+  }
+  
+  .sidebar.right {
+    width: 100%;
+  }
+}
+
 .mt-4 {
   margin-top: 16px;
 }
