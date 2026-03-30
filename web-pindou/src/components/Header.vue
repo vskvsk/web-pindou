@@ -9,9 +9,12 @@
               <circle cx="12" cy="12" r="3" fill="currentColor" />
             </svg>
           </div>
-          <h1 class="logo-text">拼豆工坊</h1>
+          <div class="logo-titles">
+            <h1 class="logo-text">拼豆神器</h1>
+            <span class="logo-sub">PERLER BEADS TOOL</span>
+          </div>
         </div>
-        <span class="version">v1.0</span>
+        <span class="version">v1.1</span>
       </div>
       
       <div class="header-right">
@@ -74,10 +77,10 @@
     <!-- 关于对话框 -->
     <el-dialog v-model="aboutVisible" title="关于" width="400px">
       <div class="about-content">
-        <div class="about-logo">🎨 拼豆工坊</div>
-        <p>一个将图片转换为拼豆图纸的工具</p>
+        <div class="about-logo">🎨 拼豆神器</div>
+        <p>图片转拼豆图纸，CIEDE2000 感知色差匹配，支持多品牌色板与导出。</p>
         <p class="tech-stack">Vue 3 + Vite + Pinia + Element Plus</p>
-        <p class="copyright">© 2026 拼豆工坊</p>
+        <p class="copyright">© 2026 拼豆神器</p>
       </div>
     </el-dialog>
   </div>
@@ -155,15 +158,33 @@ function showAbout() {
   color: #3b82f6;
 }
 
+.logo-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .logo-text {
   font-size: 20px;
   font-weight: 700;
   color: #111827;
   margin: 0;
+  line-height: 1.2;
+}
+
+.logo-sub {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: #9ca3af;
 }
 
 .dark .logo-text {
   color: white;
+}
+
+.dark .logo-sub {
+  color: #6b7280;
 }
 
 .version {

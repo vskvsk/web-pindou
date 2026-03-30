@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import type { BeadColor } from '../data/colors'
 import { mardColors } from '../data/colors'
+import type { PaletteBrandId } from '../data/brands'
 
 export interface PixelData {
   x: number
@@ -23,21 +24,32 @@ export const usePindouStore = defineStore('pindou', () => {
   const originalImage = ref<HTMLImageElement | null>(null)
   const pixelData = ref<PixelData[]>([])
   const gridSize = ref({ width: 52, height: 52 })
-  const selectedBrand = ref<BeadColor['brand']>('MARD')
+  /** 品牌 / 色板（多品牌 UI；匹配数据见 colors 说明） */
+  const paletteBrandId = ref<PaletteBrandId>('MARD')
+  /** 自定义模式下允许的色号（自 MARD 色库勾选） */
+  const customPaletteCodes = ref<string[]>([])
   const useCIEDE2000 = ref(true)
   const isProcessing = ref(false)
   const brightness = ref(0)
   const contrast = ref(0)
   const saturation = ref(0)
   const showGrid = ref(true)
-  const showNumbers = ref(false)
+  // 默认显示编号
+  const showNumbers = ref(true)
   const zoomLevel = ref(1)
   const panOffset = ref({ x: 0, y: 0 })
   const selectedColorFilter = ref<string | null>(null)
   const isDarkMode = ref(false)
 
   // ============ Getters ============
-  const colors = computed(() => mardColors.filter(c => c.brand === selectedBrand.value))
+  const colors = computed<BeadColor[]>(() => {
+    if (paletteBrandId.value === 'CUSTOM') {
+      if (customPaletteCodes.value.length === 0) return mardColors
+      const set = new Set(customPaletteCodes.value)
+      return mardColors.filter((c) => set.has(c.code))
+    }
+    return mardColors
+  })
   
   const colorCounts = computed<ColorCount[]>(() => {
     const counts = new Map<string, { color: BeadColor; count: number }>()
@@ -104,7 +116,8 @@ export const usePindouStore = defineStore('pindou', () => {
   function exportToJSON(): string {
     const exportData = {
       gridSize: gridSize.value,
-      selectedBrand: selectedBrand.value,
+      paletteBrandId: paletteBrandId.value,
+      customPaletteCodes: customPaletteCodes.value,
       pixelData: pixelData.value,
       colorCounts: colorCounts.value.map(c => ({
         code: c.color.code,
@@ -121,7 +134,8 @@ export const usePindouStore = defineStore('pindou', () => {
     originalImage,
     pixelData,
     gridSize,
-    selectedBrand,
+    paletteBrandId,
+    customPaletteCodes,
     useCIEDE2000,
     isProcessing,
     brightness,

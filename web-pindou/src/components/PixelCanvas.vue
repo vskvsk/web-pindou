@@ -11,8 +11,8 @@
     >
       <canvas
         ref="canvasRef"
-        :width="canvasWidth"
-        :height="canvasHeight"
+        :width="canvasWidth * dpr"
+        :height="canvasHeight * dpr"
         class="pixel-canvas"
       />
     </div>
@@ -44,19 +44,21 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { ZoomIn, ZoomOut, FullScreen } from '@element-plus/icons-vue'
 import { usePindouStore } from '../stores/pindou'
+import { textColorOnHex } from '../utils/flatPixelStyle'
 
 const store = usePindouStore()
 const containerRef = ref<HTMLElement>()
 const canvasRef = ref<HTMLCanvasElement>()
 
-// Canvas 设置
-const beadSize = 20
-const beadGap = 1
+// 扁平化网格：纯色块 + 清晰分割线（无渐变、无立体孔）
+const beadSize = 22
+const beadGap = 2
+const dpr = window.devicePixelRatio || 1
 
-const canvasWidth = computed(() => 
+const canvasWidth = computed(() =>
   store.gridSize.width * (beadSize + beadGap) + beadGap
 )
-const canvasHeight = computed(() => 
+const canvasHeight = computed(() =>
   store.gridSize.height * (beadSize + beadGap) + beadGap
 )
 
@@ -88,77 +90,65 @@ function draw() {
   
   const ctx = canvas.getContext('2d')
   if (!ctx) return
-  
+
+  ctx.imageSmoothingEnabled = false
+
+  // 使用逻辑尺寸绘制，高分屏放大
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  const w = canvasWidth.value
+  const h = canvasHeight.value
+
   // 清空画布
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-  
-  // 绘制背景
-  ctx.fillStyle = '#1f2937'
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
-  
-  // 绘制每个像素
+  ctx.clearRect(0, 0, w, h)
+
+  // 网格槽底色（格与格之间的缝隙）
+  ctx.fillStyle = '#020617'
+  ctx.fillRect(0, 0, w, h)
+
+  // 纯色平铺格子
   for (const pixel of store.pixelData) {
     const x = pixel.x * (beadSize + beadGap) + beadGap
     const y = pixel.y * (beadSize + beadGap) + beadGap
-    
-    // 绘制珠子
     ctx.fillStyle = pixel.hex
-    ctx.beginPath()
-    ctx.roundRect(x, y, beadSize, beadSize, 3)
-    ctx.fill()
-    
-    // 绘制珠子阴影效果
-    const gradient = ctx.createRadialGradient(
-      x + beadSize / 2, y + beadSize / 2, 0,
-      x + beadSize / 2, y + beadSize / 2, beadSize / 2
-    )
-    gradient.addColorStop(0, 'rgba(255,255,255,0.1)')
-    gradient.addColorStop(1, 'rgba(0,0,0,0.2)')
-    ctx.fillStyle = gradient
-    ctx.beginPath()
-    ctx.roundRect(x, y, beadSize, beadSize, 3)
-    ctx.fill()
-    
-    // 绘制中心孔
-    ctx.fillStyle = 'rgba(0,0,0,0.3)'
-    ctx.beginPath()
-    ctx.arc(x + beadSize / 2, y + beadSize / 2, beadSize / 6, 0, Math.PI * 2)
-    ctx.fill()
+    ctx.fillRect(x, y, beadSize, beadSize)
   }
-  
-  // 绘制网格
+
+  // 网格线（略亮于槽底，便于辨认每一格）
   if (showGrid.value) {
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)'
-    ctx.lineWidth = 0.5
-    
+    ctx.strokeStyle = 'rgba(148,163,184,0.45)'
+    ctx.lineWidth = 1
+    ctx.beginPath()
     for (let i = 0; i <= store.gridSize.width; i++) {
-      const x = i * (beadSize + beadGap) + beadGap / 2
-      ctx.beginPath()
-      ctx.moveTo(x, 0)
-      ctx.lineTo(x, canvas.height)
-      ctx.stroke()
+      const gx = i * (beadSize + beadGap) + beadGap / 2
+      ctx.moveTo(gx + 0.5, 0)
+      ctx.lineTo(gx + 0.5, h)
     }
-    
-    for (let i = 0; i <= store.gridSize.height; i++) {
-      const y = i * (beadSize + beadGap) + beadGap / 2
-      ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(canvas.width, y)
-      ctx.stroke()
+    for (let j = 0; j <= store.gridSize.height; j++) {
+      const gy = j * (beadSize + beadGap) + beadGap / 2
+      ctx.moveTo(0, gy + 0.5)
+      ctx.lineTo(w, gy + 0.5)
     }
+    ctx.stroke()
   }
-  
-  // 绘制色号（仅在大缩放级别时显示）
-  if (showNumbers.value && zoomLevel.value >= 1.5) {
-    ctx.fillStyle = 'rgba(0,0,0,0.7)'
-    ctx.font = '8px sans-serif'
+
+  // 色号（完整色号，颜色随格子亮度反相，易辨认）
+  if (showNumbers.value) {
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    
+    const fontPx = Math.max(8, Math.min(11, Math.floor(beadSize * 0.42)))
+    ctx.font = `600 ${fontPx}px ui-sans-serif, system-ui, sans-serif`
+
     for (const pixel of store.pixelData) {
-      const x = pixel.x * (beadSize + beadGap) + beadGap + beadSize / 2
-      const y = pixel.y * (beadSize + beadGap) + beadGap + beadSize / 2
-      ctx.fillText(pixel.colorCode.slice(-2), x, y)
+      const cx = pixel.x * (beadSize + beadGap) + beadGap + beadSize / 2
+      const cy = pixel.y * (beadSize + beadGap) + beadGap + beadSize / 2
+      const label = pixel.colorCode
+      const fill = textColorOnHex(pixel.hex)
+      ctx.strokeStyle = fill === '#f8fafc' ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.35)'
+      ctx.lineWidth = 2
+      ctx.lineJoin = 'round'
+      ctx.strokeText(label, cx, cy)
+      ctx.fillStyle = fill
+      ctx.fillText(label, cx, cy)
     }
   }
 }
@@ -167,6 +157,7 @@ function draw() {
 watch(() => store.pixelData, draw, { deep: true })
 watch(showGrid, draw)
 watch(showNumbers, draw)
+watch(zoomLevel, draw)
 
 onMounted(() => {
   draw()
@@ -246,6 +237,10 @@ function handleWheel(e: WheelEvent) {
 
 .pixel-canvas {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .canvas-controls {

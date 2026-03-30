@@ -12,7 +12,7 @@
       <input
         ref="fileInput"
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/gif"
         class="hidden"
         @change="handleFileChange"
       />
@@ -20,7 +20,7 @@
       <template v-if="!previewUrl">
         <el-icon class="upload-icon"><Upload /></el-icon>
         <p class="upload-text">点击或拖拽图片到此处</p>
-        <p class="upload-hint">支持 JPG、PNG、GIF 格式</p>
+        <p class="upload-hint">支持 JPG、PNG、WebP、GIF，最大 10MB</p>
       </template>
       
       <template v-else>
